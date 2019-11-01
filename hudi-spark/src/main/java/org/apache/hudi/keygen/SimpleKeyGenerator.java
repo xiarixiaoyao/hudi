@@ -68,4 +68,12 @@ public class SimpleKeyGenerator extends KeyGenerator {
 
     return new HoodieKey(recordKey, partitionPath);
   }
+
+  public String getRecordKeyField() {
+    return recordKeyField;
+  }
+
+  public String getPartitionPathField() {
+    return partitionPathField;
+  }
 }

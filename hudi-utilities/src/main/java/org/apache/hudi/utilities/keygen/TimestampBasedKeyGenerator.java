@@ -135,10 +135,12 @@ public class TimestampBasedKeyGenerator extends SimpleKeyGenerator {
       Date timestamp = new Date(timeMs);
       String recordKey = DataSourceUtils.getNestedFieldValAsString(record, recordKeyField, true);
       if (recordKey == null || recordKey.isEmpty()) {
-        throw new HoodieKeyException("recordKey value: \"" + recordKey + "\" for field: \"" + recordKeyField + "\" cannot be null or empty.");
+        throw new HoodieKeyException("recordKey value: \"" + recordKey + "\" for field: \"" + recordKeyField + "\" "
+            + "cannot be null or empty.");
       }
 
-      String partitionPath = hiveStylePartitioning ? partitionPathField + "=" + partitionPathFormat.format(timestamp)
+      String partitionPath =
+          hiveStylePartitioning ? partitionPathField + "=" + partitionPathFormat.format(timestamp)
               : partitionPathFormat.format(timestamp);
       return new HoodieKey(recordKey, partitionPath);
     } catch (ParseException pe) {

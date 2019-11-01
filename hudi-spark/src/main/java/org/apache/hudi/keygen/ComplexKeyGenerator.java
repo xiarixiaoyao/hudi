@@ -18,6 +18,7 @@
 
 package org.apache.hudi.keygen;
 
+import java.util.List;
 import org.apache.hudi.DataSourceUtils;
 import org.apache.hudi.DataSourceWriteOptions;
 import org.apache.hudi.common.config.TypedProperties;
@@ -27,7 +28,6 @@ import org.apache.hudi.exception.HoodieKeyException;
 import org.apache.avro.generic.GenericRecord;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -35,15 +35,16 @@ import java.util.stream.Collectors;
  */
 public class ComplexKeyGenerator extends KeyGenerator {
 
+  public static final String DEFAULT_PARTITION_PATH_SEPARATOR = "/";
+  public static final String DEFAULT_RECORD_KEY_SEPARATOR = ":";
   private static final String DEFAULT_PARTITION_PATH = "default";
-  private static final String DEFAULT_PARTITION_PATH_SEPARATOR = "/";
 
   protected static final String NULL_RECORDKEY_PLACEHOLDER = "__null__";
   protected static final String EMPTY_RECORDKEY_PLACEHOLDER = "__empty__";
 
-  protected final List<String> recordKeyFields;
+  protected List<String> recordKeyFields;
 
-  protected final List<String> partitionPathFields;
+  protected List<String> partitionPathFields;
 
   protected final boolean hiveStylePartitioning;
 

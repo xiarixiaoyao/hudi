@@ -75,7 +75,7 @@ public final class SourceFormatAdapter {
                         HOODIE_RECORD_STRUCT_NAME, HOODIE_RECORD_NAMESPACE).toJavaRDD()
                     : AvroConversionUtils.createRdd(
                         rdd, HOODIE_RECORD_STRUCT_NAME, HOODIE_RECORD_NAMESPACE).toJavaRDD()
-                ))
+            ))
             .orElse(null)), r.getCheckpointForNextBatch(), r.getSchemaProvider());
       }
       default:
