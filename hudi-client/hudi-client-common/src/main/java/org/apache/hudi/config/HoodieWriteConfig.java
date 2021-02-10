@@ -88,6 +88,8 @@ public class HoodieWriteConfig extends DefaultHoodieConfig {
   public static final String DEFAULT_WRITE_BUFFER_LIMIT_BYTES = String.valueOf(4 * 1024 * 1024);
   public static final String COMBINE_BEFORE_INSERT_PROP = "hoodie.combine.before.insert";
   public static final String DEFAULT_COMBINE_BEFORE_INSERT = "false";
+  public static final String TAGGING_BEFORE_INSERT = "hoodie.tagging.before.insert";
+  public static final String DEFAULT_TAGGING_BEFORE_INSERT = "true";
   public static final String COMBINE_BEFORE_UPSERT_PROP = "hoodie.combine.before.upsert";
   public static final String DEFAULT_COMBINE_BEFORE_UPSERT = "true";
   public static final String COMBINE_BEFORE_DELETE_PROP = "hoodie.combine.before.delete";
@@ -271,6 +273,10 @@ public class HoodieWriteConfig extends DefaultHoodieConfig {
 
   public boolean shouldCombineBeforeInsert() {
     return Boolean.parseBoolean(props.getProperty(COMBINE_BEFORE_INSERT_PROP));
+  }
+
+  public boolean shouldTaggingBeforeUpdate() {
+    return Boolean.parseBoolean(props.getProperty(TAGGING_BEFORE_INSERT, DEFAULT_TAGGING_BEFORE_INSERT));
   }
 
   public boolean shouldCombineBeforeUpsert() {

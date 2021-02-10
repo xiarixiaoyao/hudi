@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hudi.common.config.HoodieMetadataConfig;
 import org.apache.hudi.common.config.SerializableConfiguration;
@@ -615,5 +616,38 @@ public class FSUtils {
     return Arrays.stream(statuses)
         .filter(fileStatus -> !fileStatus.getPath().toString().contains(HoodieTableMetaClient.METAFOLDER_NAME))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * move a particular file or directory to the trash.
+   * @param fs  File System
+   * @param path Path
+   * @param conf
+   * @param clearDirectly when true, will delete file directly
+   * @return true if move successful
+   * @throws IOException
+   */
+  public static boolean moveToTrash(FileSystem fs, Path path, Configuration conf, boolean clearDirectly)
+      throws IOException {
+    LOG.debug("deleting " + path);
+    boolean result = false;
+    try {
+      if (clearDirectly) {
+        LOG.info("clearDirectly is set to true. Not moving to Trash " + path);
+      } else {
+        result = Trash.moveToAppropriateTrash(fs, path, conf);
+        if (result) {
+          LOG.trace("move to trash: " + path);
+          return true;
+        }
+      }
+    } catch (IOException ioe) {
+      LOG.warn(ioe.getMessage() + "; Force to delete it.");
+    }
+    result = fs.delete(path, true);
+    if (!result) {
+      LOG.error("Failed to delete " + path);
+    }
+    return result;
   }
 }

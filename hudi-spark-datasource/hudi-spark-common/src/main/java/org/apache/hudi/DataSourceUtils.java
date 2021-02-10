@@ -44,6 +44,8 @@ import org.apache.hudi.config.HoodieWriteConfig;
 import org.apache.hudi.exception.HoodieException;
 import org.apache.hudi.exception.HoodieNotSupportedException;
 import org.apache.hudi.exception.TableNotFoundException;
+import org.apache.hudi.hadoop.HoodieParquetInputFormat;
+import org.apache.hudi.hadoop.realtime.HoodieParquetRealtimeInputFormat;
 import org.apache.hudi.hive.HiveSyncConfig;
 import org.apache.hudi.hive.SlashEncodedDayPartitionValueExtractor;
 import org.apache.hudi.index.HoodieIndex.IndexType;
@@ -54,17 +56,22 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.catalyst.catalog.CatalogTable;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
  * Utilities used throughout the data source.
  */
 public class DataSourceUtils {
+
+  private static final String NAME = "hoodie";
 
   private static final Logger LOG = LogManager.getLogger(DataSourceUtils.class);
 
@@ -299,4 +306,24 @@ public class DataSourceUtils {
         DataSourceWriteOptions.DEFAULT_HIVE_SUPPORT_TIMESTAMP()));
     return hiveSyncConfig;
   }
+
+  public static boolean isHoodieDataSourceName(String name) {
+    return NAME.equals(name.toLowerCase(Locale.ROOT));
+  }
+
+  public static boolean isHoodieTable(CatalogTable table) {
+    return isHoodieTable(table.provider().get())
+            || (table.storage().inputFormat().isDefined()
+            && (table.storage().inputFormat().get().equals(HoodieParquetInputFormat.class.getName())
+            || table.storage().inputFormat().get().equals(HoodieParquetRealtimeInputFormat.class.getName())));
+  }
+
+  public static boolean isHoodieTable(String provider) {
+    return provider.toLowerCase(Locale.ROOT).contains("hudi");
+  }
+
+  public static URI stringToURI(String str) {
+    return new Path(str).toUri();
+  }
+
 }

@@ -105,6 +105,11 @@ public class HoodieTableConfig implements Serializable {
     this.props = props;
   }
 
+  public HoodieTableConfig(Map<String, String> map) {
+    this.props = new Properties();
+    this.props.putAll(map);
+  }
+
   /**
    * For serailizing and de-serializing.
    *

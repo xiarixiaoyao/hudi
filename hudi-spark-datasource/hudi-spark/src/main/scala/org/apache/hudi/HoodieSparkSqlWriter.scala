@@ -423,7 +423,7 @@ private[hudi] object HoodieSparkSqlWriter {
    */
   case class TableInstantInfo(basePath: Path, instantTime: String, commitActionType: String, operation: WriteOperationType)
 
-  private def commitAndPerformPostOperations(writeResult: HoodieWriteResult,
+  def commitAndPerformPostOperations(writeResult: HoodieWriteResult,
                                              parameters: Map[String, String],
                                              client: SparkRDDWriteClient[HoodieRecordPayload[Nothing]],
                                              tableConfig: HoodieTableConfig,

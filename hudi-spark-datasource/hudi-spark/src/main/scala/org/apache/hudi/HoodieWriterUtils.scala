@@ -17,21 +17,27 @@
 
 package org.apache.hudi
 
+import java.io.InputStream
+import java.util.Properties
+
 import org.apache.hudi.DataSourceWriteOptions._
 import org.apache.hudi.common.config.TypedProperties
 
 import scala.collection.JavaConversions.mapAsJavaMap
 import scala.collection.JavaConverters.mapAsScalaMapConverter
-
 import org.apache.hudi.common.config.HoodieMetadataConfig.DEFAULT_METADATA_ENABLE
 import org.apache.hudi.common.config.HoodieMetadataConfig.DEFAULT_METADATA_VALIDATE
 import org.apache.hudi.common.config.HoodieMetadataConfig.METADATA_ENABLE_PROP
 import org.apache.hudi.common.config.HoodieMetadataConfig.METADATA_VALIDATE_PROP
 
+import org.apache.spark.sql.SparkSession
+
 /**
  * WriterUtils to assist in write path in Datasource and tests.
  */
 object HoodieWriterUtils {
+
+  val defaultConfFile = "hoodie.properties"
 
   def javaParametersWithWriteDefaults(parameters: java.util.Map[String, String]): java.util.Map[String, String] = {
     mapAsJavaMap(parametersWithWriteDefaults(parameters.asScala.toMap))
@@ -44,6 +50,11 @@ object HoodieWriterUtils {
     * @return
     */
   def parametersWithWriteDefaults(parameters: Map[String, String]): Map[String, String] = {
+
+    getDefaultParmeters ++ translateStorageTypeToTableType(parameters)
+  }
+
+  def getDefaultParmeters: Map[String, String] = {
     Map(OPERATION_OPT_KEY -> DEFAULT_OPERATION_OPT_VAL,
       TABLE_TYPE_OPT_KEY -> DEFAULT_TABLE_TYPE_OPT_VAL,
       PRECOMBINE_FIELD_OPT_KEY -> DEFAULT_PRECOMBINE_FIELD_OPT_VAL,
@@ -73,7 +84,46 @@ object HoodieWriterUtils {
       HIVE_USE_JDBC_OPT_KEY -> DEFAULT_HIVE_USE_JDBC_OPT_VAL,
       ASYNC_COMPACT_ENABLE_OPT_KEY -> DEFAULT_ASYNC_COMPACT_ENABLE_OPT_VAL,
       ENABLE_ROW_WRITER_OPT_KEY -> DEFAULT_ENABLE_ROW_WRITER_OPT_VAL
-    ) ++ translateStorageTypeToTableType(parameters)
+    )
+  }
+
+  def getDefaultConfigFileParameters(): Map[String, String] = {
+    var fs: InputStream = null
+    try {
+      val properties = new Properties()
+      fs = getClass.getClassLoader.getResourceAsStream(defaultConfFile)
+      properties.load(fs)
+      properties.asScala.toMap.asInstanceOf[Map[String, String]]
+    } catch {
+      case e: Throwable =>
+        e.printStackTrace()
+        Map[String, String]()
+    } finally {
+      if (fs != null) {
+        fs.close()
+      }
+    }
+  }
+
+  def getSessionConfig(): Map[String, String] = {
+    val ss = SparkSession.active
+    ss.conf.getAll.filter {case (k, v) => k.toString.startsWith("hoodie.")}
+  }
+
+  def withDefaultConfigFile(parameters: Map[String, String]): Map[String, String] = {
+    getDefaultConfigFileParameters() ++ parameters
+  }
+
+  def combineParameters(p1: Map[String, String], p2: Map[String, String]): Map[String, String] = {
+    translateStorageTypeToTableType(p1 ++ p2)
+  }
+
+  def combineDefaultParameters: Map[String, String] = {
+    combineParameters(getDefaultParmeters, getDefaultConfigFileParameters())
+  }
+
+  def combineAllParameters(parameters: Map[String, String]): Map[String, String] = {
+    translateStorageTypeToTableType(getDefaultParmeters ++ getDefaultConfigFileParameters() ++ parameters ++ getSessionConfig())
   }
 
   def toProperties(params: Map[String, String]): TypedProperties = {
