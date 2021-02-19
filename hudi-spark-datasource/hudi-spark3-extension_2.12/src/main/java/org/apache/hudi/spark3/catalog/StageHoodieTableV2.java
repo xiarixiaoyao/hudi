@@ -47,79 +47,79 @@ import scala.Option;
  */
 public class StageHoodieTableV2 implements SupportsWrite, StagedTable {
 
-    private Identifier identifier;
-    private HoodieCatalog catalog;
-    private StructType schema;
-    private Transform[] paritions;
-    private Map<String, String> properties;
-    private TableCreationModes modes;
-    Option<Dataset> sourceQuery;
+  private Identifier identifier;
+  private HoodieCatalog catalog;
+  private StructType schema;
+  private Transform[] paritions;
+  private Map<String, String> properties;
+  private TableCreationModes modes;
+  Option<Dataset> sourceQuery;
 
-    public StageHoodieTableV2(Identifier identifier,
-                              HoodieCatalog catalog,
-                              StructType schema,
-                              Transform[] paritions,
-                              Map<String, String> properties,
-                              TableCreationModes modes) {
+  public StageHoodieTableV2(Identifier identifier,
+      HoodieCatalog catalog,
+      StructType schema,
+      Transform[] paritions,
+      Map<String, String> properties,
+      TableCreationModes modes) {
 
-        this.identifier = identifier;
-        this.catalog = catalog;
-        this.schema = schema;
-        this.paritions = paritions;
-        this.properties = properties;
-        this.modes = modes;
+    this.identifier = identifier;
+    this.catalog = catalog;
+    this.schema = schema;
+    this.paritions = paritions;
+    this.properties = properties;
+    this.modes = modes;
+  }
+
+  @Override
+  public void commitStagedChanges() {
+    try {
+      catalog.createHoodieTable(identifier, schema, paritions, properties, sourceQuery, modes);
+    } catch (IOException | NoSuchTableException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public void abortStagedChanges() {
+
+  }
+
+  @Override
+  public WriteBuilder newWriteBuilder(LogicalWriteInfo logicalWriteInfo) {
+    if (this.properties == null) {
+      this.properties = new HashMap<String, String>();
+    }
+    this.properties.putAll(logicalWriteInfo.options().asCaseSensitiveMap());
+    return new HoodieV1WriteBuilder();
+  }
+
+  @Override
+  public String name() {
+    return identifier.name();
+  }
+
+  @Override
+  public StructType schema() {
+    return schema;
+  }
+
+  @Override
+  public Set<TableCapability> capabilities() {
+    Set<TableCapability> tableCapabilities = new HashSet<>();
+    tableCapabilities.add(TableCapability.V1_BATCH_WRITE);
+    return tableCapabilities;
+  }
+
+  public class HoodieV1WriteBuilder implements WriteBuilder, V1WriteBuilder {
 
     @Override
-    public void commitStagedChanges() {
-        try {
-            catalog.createHoodieTable(identifier, schema, paritions, properties, sourceQuery, modes);
-        } catch (IOException | NoSuchTableException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void abortStagedChanges() {
-
-    }
-
-    @Override
-    public WriteBuilder newWriteBuilder(LogicalWriteInfo logicalWriteInfo) {
-        if (this.properties == null) {
-            this.properties = new HashMap<String, String>();
-        }
-        this.properties.putAll(logicalWriteInfo.options().asCaseSensitiveMap());
-        return new HoodieV1WriteBuilder();
-    }
-
-    @Override
-    public String name() {
-        return identifier.name();
-    }
-
-    @Override
-    public StructType schema() {
-        return schema;
-    }
-
-    @Override
-    public Set<TableCapability> capabilities() {
-        Set<TableCapability> tableCapabilities = new HashSet<>();
-        tableCapabilities.add(TableCapability.V1_BATCH_WRITE);
-        return tableCapabilities;
-    }
-
-    public class HoodieV1WriteBuilder implements WriteBuilder, V1WriteBuilder {
-
+    public InsertableRelation buildForV1Write() {
+      return new InsertableRelation() {
         @Override
-        public InsertableRelation buildForV1Write() {
-            return new InsertableRelation() {
-                @Override
-                public void insert(Dataset<Row> data, boolean overwrite) {
-                    sourceQuery = Option.apply(data);
-                }
-            };
+        public void insert(Dataset<Row> data, boolean overwrite) {
+          sourceQuery = Option.apply(data);
         }
+      };
     }
+  }
 }

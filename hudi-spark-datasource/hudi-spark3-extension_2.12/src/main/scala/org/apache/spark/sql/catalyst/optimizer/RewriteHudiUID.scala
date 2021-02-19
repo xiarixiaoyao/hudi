@@ -41,13 +41,13 @@ object RewriteHudiUID extends Rule[LogicalPlan] {
 
   val conf: SQLConf = SparkSession.active.sessionState.conf
 
-  override def apply(plan: LogicalPlan): LogicalPlan = {
+  override def apply(plan: LogicalPlan): LogicalPlan = plan resolveOperators {
     case DeleteFromTable(table: LogicalPlan, cond) if (HudiSQLUtils.isHudiRelation(table)) =>
       DeleteFromHudiTable(table, cond)
     case update @ UpdateTable(table: LogicalPlan, _, _) if HudiSQLUtils.isHudiRelation(table) =>
-      null
+      convertToUpdateCommand(update)
     case merge: HudiMergeIntoTable =>
-      null
+      convertToMergeCommand(merge)
   }
 
   /**
@@ -282,9 +282,8 @@ object RewriteHudiUID extends Rule[LogicalPlan] {
   }
 
   /**
-    * modify from delta lake
-    * Give a list of
-    */
+   * generate update expressions
+   */
   protected def generateUpdateExpressions(
        targetCols: Seq[NamedExpression],
        updateOps: Seq[UpdateOperation],

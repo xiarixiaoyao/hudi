@@ -256,20 +256,26 @@ object HudiSQLUtils {
     // create hoodieRecord directly, insert record is should be considered
     val genericRecords: RDD[GenericRecord] = HoodieSparkUtils.createRdd(df, schema, structName, nameSpace)
     val combineKey = parameters.get(PRECOMBINE_FIELD_OPT_KEY).get.trim
+
     val hoodieRecords = genericRecords.map { gr =>
+
       val orderingVal = HoodieAvroUtils
         .getNestedFieldVal(gr, combineKey, false).asInstanceOf[Comparable[_]]
 
-      val (hoodieRecord, canSetLocation) = if (gr.get(RECORDKEY_FIELD_OPT_KEY) == null
+      val canSetLocation: Boolean = if (gr.get(RECORDKEY_FIELD_OPT_KEY) == null
         || gr.get(PARTITIONPATH_FIELD_OPT_KEY) == null
         || gr.get(HoodieRecord.COMMIT_TIME_METADATA_FIELD) == null) {
-        (DataSourceUtils.createHoodieRecord(gr,
-          orderingVal, keyGenerator.getKey(gr), parameters(PAYLOAD_CLASS_OPT_KEY)), false)
+        false
       } else {
-        (DataSourceUtils.createHoodieRecord(gr,
+        true
+      }
+      val hoodieRecord = if (!canSetLocation) {
+        DataSourceUtils.createHoodieRecord(gr, orderingVal, keyGenerator.getKey(gr), parameters(PAYLOAD_CLASS_OPT_KEY))
+      } else {
+        DataSourceUtils.createHoodieRecord(gr,
           orderingVal,
           new HoodieKey(gr.get(RECORDKEY_FIELD_OPT_KEY).toString, gr.get(PARTITIONPATH_FIELD_OPT_KEY).toString),
-          parameters(PARTITIONPATH_FIELD_OPT_KEY)), true)
+          parameters(PARTITIONPATH_FIELD_OPT_KEY))
       }
 
       if (canSetLocation) {

@@ -44,9 +44,9 @@ class HudiAnalysis(session: SparkSession, conf: SQLConf) extends Rule[LogicalPla
     // so if source is not resolved, we add a special placeholder to prevert ResolveReferences rule to resolve * in mergeIntoTable
     case m @ MergeIntoTable(target, source, _, _, _) =>
       if (source.resolved) {
-        null
+        dealWithStarAction(m)
       } else {
-        null
+        placeHolderStarAction(m)
       }
     // we should deal with Meta columns in hudi, it will be safe to deal insertIntoStatement here.
     case i @ InsertIntoStatement(table, _, query, _, _)

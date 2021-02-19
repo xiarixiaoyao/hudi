@@ -23,6 +23,6 @@ package org.apache.hudi.spark3.catalog;
  *
  * @since 2021/1/3
  */
-public enum  TableCreationModes {
-    Create, CreateOrReplace, Replace
+public enum TableCreationModes {
+  Create, CreateOrReplace, Replace
 }

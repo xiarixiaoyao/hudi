@@ -39,58 +39,58 @@ import java.util.Set;
  */
 public class BaseStagedTable implements SupportsWrite, StagedTable {
 
-    private Identifier identifier;
-    private Table table;
-    private TableCatalog catalog;
+  private Identifier identifier;
+  private Table table;
+  private TableCatalog catalog;
 
-    public BaseStagedTable(Identifier identifier,
-                           Table table,
-                           TableCatalog catalog) {
+  public BaseStagedTable(Identifier identifier,
+      Table table,
+      TableCatalog catalog) {
 
-        this.identifier = identifier;
-        this.table = table;
-        this.catalog = catalog;
+    this.identifier = identifier;
+    this.table = table;
+    this.catalog = catalog;
+  }
+
+  @Override
+  public void commitStagedChanges() {
+  }
+
+  @Override
+  public void abortStagedChanges() {
+    catalog.dropTable(identifier);
+  }
+
+  @Override
+  public WriteBuilder newWriteBuilder(LogicalWriteInfo logicalWriteInfo) {
+    if (table instanceof SupportsWrite) {
+      return ((SupportsWrite) table).newWriteBuilder(logicalWriteInfo);
     }
+    throw new RuntimeException("Table implementation does not support writes: " + identifier.name());
+  }
 
-    @Override
-    public void commitStagedChanges() {
-    }
+  @Override
+  public String name() {
+    return identifier.name();
+  }
 
-    @Override
-    public void abortStagedChanges() {
-        catalog.dropTable(identifier);
-    }
+  @Override
+  public StructType schema() {
+    return table.schema();
+  }
 
-    @Override
-    public WriteBuilder newWriteBuilder(LogicalWriteInfo logicalWriteInfo) {
-        if (table instanceof SupportsWrite) {
-            return ((SupportsWrite) table).newWriteBuilder(logicalWriteInfo);
-        }
-        throw new RuntimeException("Table implementation does not support writes: " + identifier.name());
-    }
+  @Override
+  public Transform[] partitioning() {
+    return table.partitioning();
+  }
 
-    @Override
-    public String name() {
-        return identifier.name();
-    }
+  @Override
+  public Map<String, String> properties() {
+    return table.properties();
+  }
 
-    @Override
-    public StructType schema() {
-        return table.schema();
-    }
-
-    @Override
-    public Transform[] partitioning() {
-        return table.partitioning();
-    }
-
-    @Override
-    public Map<String, String> properties() {
-        return table.properties();
-    }
-
-    @Override
-    public Set<TableCapability> capabilities() {
-        return table.capabilities();
-    }
+  @Override
+  public Set<TableCapability> capabilities() {
+    return table.capabilities();
+  }
 }

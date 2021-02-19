@@ -33,51 +33,51 @@ import java.util.stream.Stream;
  */
 public class HoodieIdentifier implements Identifier {
 
-    private String[] namespace;
-    private String name;
+  private String[] namespace;
+  private String name;
 
-    public HoodieIdentifier(String[] namespace, String name) {
-        this.namespace = namespace;
-        this.name = name;
+  public HoodieIdentifier(String[] namespace, String name) {
+    this.namespace = namespace;
+    this.name = name;
+  }
+
+  public HoodieIdentifier(Identifier identifier) {
+    this(identifier.namespace(), identifier.name());
+  }
+
+  @Override
+  public String[] namespace() {
+    return namespace;
+  }
+
+  @Override
+  public String name() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return Stream.concat(Stream.of(namespace), Stream.of(name))
+        .map(CatalogV2Implicits::quoteIfNeeded)
+        .collect(Collectors.joining("."));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
 
-    public HoodieIdentifier(Identifier identifier) {
-        this(identifier.namespace(), identifier.name());
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
 
-    @Override
-    public String[] namespace() {
-        return namespace;
-    }
+    HoodieIdentifier that = (HoodieIdentifier) o;
+    return Arrays.equals(namespace, that.namespace) && name.equals(that.name);
+  }
 
-    @Override
-    public String name() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return Stream.concat(Stream.of(namespace), Stream.of(name))
-                .map(CatalogV2Implicits::quoteIfNeeded)
-                .collect(Collectors.joining("."));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        HoodieIdentifier that = (HoodieIdentifier) o;
-        return Arrays.equals(namespace, that.namespace) && name.equals(that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(Arrays.hashCode(namespace), name);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(Arrays.hashCode(namespace), name);
+  }
 }
